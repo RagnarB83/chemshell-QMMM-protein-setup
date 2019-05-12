@@ -1,0 +1,24 @@
+#Chemshell-script location
+set scriptdir /home/ath146/Chemshell-scripts
+
+source $scriptdir/procs.tcl
+####################################################
+# SETTING UP QM REGION
+###################################################
+# QM REGION atoms, charge and multiplicity.
+set femoco [seq 17776 to 17793]
+set hca [seq 17809 to 17829]
+set imz [seq 6913 to 6923]
+set cys {4176 4177 4178 4179}
+set HZIN {37067 37068 37069 37070 37071 37072 37073} 
+#HZIN and extra proton
+
+set qmatoms [concat $femoco $hca $imz $cys $HZIN]
+
+
+set qmatoms [concat $qmatoms]
+set qmatomsfile [ open qmatoms w]
+puts $qmatomsfile "set qmatoms {$qmatoms}"
+close $qmatomsfile
+puts "There are [llength $qmatoms] QM atoms. Written to file qmatoms."
+puts "QM atoms:  $qmatoms"

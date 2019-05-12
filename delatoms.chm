@@ -1,0 +1,213 @@
+if { $argv == "" || [llength $argv] < "2" } {
+puts "\033\[31mNo fragment file or XPLOR-PSF file given. Quitting.\033\[0m"
+puts "\033\[32mUsage: chemshell.bash delatoms.chm fragmentfile.c xplor-psf-file.psf\033\[0m"
+puts "Note: XPLOR-style PSF file has to be read-in (required by PSFgen 1.6). Both CHARMM and XPLOR style PSF file should have been created by Python script"
+puts "Script will create new PSF file in both CHARMM and XPLOR formats"
+exit
+}
+
+source act
+#Chemshell-script location. This location should contain procs.tcl, CHARMM top and par files, PSFgen 1.6
+set scriptdir /users/home/ath146/Chemshell-scripts
+#set scriptdir /home/ragnarbj/QM-MM/nitrogenase/Chemshell-QM-MM-scripts/
+
+#Load PSFGEN 1.6 for PSFfile modification
+set auto_path [linsert $auto_path 0 $scriptdir/psfgen1.6]
+puts $auto_path
+package require psfgen 1.6
+
+source $scriptdir/procs.tcl
+#Fragfile and PSF file taken from arguments
+set frag [lindex $argv 0]
+set oldxplorpsf [lindex $argv 1]
+set newxplorpsf  "[file rootname $oldxplorpsf]-changed.psf"
+
+exec cp $frag "old-$frag"
+puts "Old fragment file $frag renamed as old-$frag"
+#Putting fragment file
+fragment $frag old persistent
+set oldnum [get_number_of_atoms coords=$frag]
+puts "Initial number of atoms is $oldnum"
+# Read in the original data from the preparation script. This sets up lists $charges, $groups, $types, $pdbresidues and $residuegroups
+# These lists are modified below in del-atoms section
+source save-new.chm
+exec cp save-new.chm old-save-new.chm
+puts "Old save-new.chm saved as old-save-new.chm"
+
+# Renaming
+set newcharges $charges
+set newtypes $types
+set newpdbresidues $pdbresidues
+set newgroups $groups
+set newresiduegroups $residuegroups
+
+set reslist [lindex $newpdbresidues 0]
+set resnums [lindex $newpdbresidues 1]
+set newreslist $reslist
+set newresnums $resnums
+
+###########################
+# DELETE ATOMS HERE
+############################
+
+# Example here: deletion of HCA hydroxy proton {17823}
+set delatoms {17791}
+
+####################################################
+# USER MODIFICATION SHOULD END HERE
+####################################################
+
+set delatoms [lsort -integer -decreasing $delatoms]
+####################
+# CREATING NEW PSF FILE
+#######################
+# This section requires PSFGEN 1.6 to be loaded
+topology $scriptdir/top_all36_prot.rtf
+readpsf $oldxplorpsf
+
+#Opening PSF file for reading temporarily
+set fp [open $oldxplorpsf r]
+# This section requires PSFGEN 1.6 to be loaded
+
+#For each delatom
+for { set i 0}  { $i < [llength $delatoms] } { incr i 1 } {
+set d [lindex $delatoms $i]
+puts "d is $d"
+set startatoms false
+
+#Here finding out which segname and resid for atomnumber
+     set fp [open $oldxplorpsf r]
+     while {-1 != [gets $fp line]} {
+          if {[lindex $line 1] == "NATOM" || [lindex $line 1] == "!NATOM"} {
+                set startatoms true
+          }
+             if { $startatoms == "true" } {
+                if { [lindex $line 0] == "$d" } {
+                  set segname [lindex $line 1]
+                  set resid [lindex $line 2]
+                  set atomname [lindex $line 4]
+                 puts "\033\[31m Deleting atom $atomname (segname  $segname,  resid is $resid) from PSF information!\033\[0m"
+                 #PSFgen 1.6 delatom command
+                 delatom $segname $resid $atomname
+                }
+             }
+     }
+
+
+}
+close $fp
+#     17823 COF      6494     HCA      HOB      H        0.310000        1.0080           0
+
+
+#Needed?
+#regenerate angles dihedrals
+
+#Printing Xplor PSF file and CHARMM-types PSF file
+writepsf x-plor cmap new-XPLOR-psffile.psf
+writepsf charmm cmap new-CHARMM-psffile.psf
+writepdb new-PDB.pdb
+
+
+
+#Deleting delatoms from fragment file
+for { set i 0}  { $i < [llength $delatoms] } { incr i 1 } {
+set d [lindex $delatoms $i]
+set cd [expr $d - 1]
+#Deleting delatoms from fragment file
+delete_atom_entry coords=$frag atom_number=$d
+puts "\033\[31mDeleted\033\[0m atom \033\[32m$d\033\[0m from fragment file. Automatically deleted from act list. QM region should be modified in QMregiondefine.chm script (via updated save-new.chm)."
+
+#Deleting from charges
+puts "Now deleting charge from charges list"
+set newcharges [lreplace $newcharges $cd $cd ]
+
+# Deleting from types
+puts "Now deleting atom type from types list"
+set newtypes [lreplace $newtypes $cd $cd ]
+
+puts "Now deleting atom number from groups list"
+set newgroups [delindexandreorder $newgroups "$d"]
+puts "Now deleting atom number from residuegroups list"
+set newresiduegroups [delindexandreorder $newresiduegroups "$d"]
+
+puts "Now deleting atom number from pdbresidues list"
+set newresnums [delindexandreorder $newresnums "$d"]
+
+#New 4 feb 2015 RB. Deleting atoms from list and reorder
+#NO WORKING
+#set newact [delindexandreorder $act "$d"]
+}
+
+#puts "newact is $newact"
+#puts ""
+#Deleting residue name if needed
+if { [info exists emptylist] == "1" } {
+puts "Residue is now empty it seems. Deleting residue name from pdbresidues list."
+puts "Residue no. $emptylist with name [lindex $reslist $emptylist] has been deleted"
+set newreslist [lreplace $newreslist $emptylist $emptylist]
+}
+set newpdbresidues {}
+lappend newpdbresidues $newreslist
+lappend newpdbresidues $newresnums
+
+puts ""
+
+# Here writing down number of atoms, residues before and after deletion to check if everything went OK.
+puts "\033\[32mDeletion complete! Lists have been renumbered\033\[0m"
+puts "No. charges changed from [llength $charges] to [llength $newcharges]"
+puts "No. atom types changed from [llength $types] to [llength $newtypes]"
+puts "No. charge groups changed from [llength $groups] to [llength $newgroups]"
+puts "No. residues (residue groups) changed from [llength $residuegroups] to [llength $newresiduegroups]"
+puts "No. pdbresidue names  changed from [llength [lindex $pdbresidues 0]] to [llength $newreslist]"
+
+############
+set newnum [get_number_of_atoms coords=$frag]
+puts "There are now $newnum atoms."
+if { [llength $newcharges] != $newnum } {
+puts "List charges is not the same size as atoms in fragment file. Wrong fragfile or wrong save-new.chm file"
+}
+#set delnum [expr $newnum - $oldnum]
+
+
+set savefile [ open save-new.chm w]
+puts $savefile "# Updated file by delatoms.chm script. Atoms $delatoms have been deleted from all lists and lists renumbered"
+puts $savefile "set groups { $newgroups }"
+puts $savefile "set charges { $newcharges }"
+puts $savefile "set pdbresidues { $newpdbresidues }"
+puts $savefile "set residuegroups { $newresiduegroups }"
+puts $savefile "set types { $newtypes }"
+puts $savefile "set delatoms { $delatoms }"
+close $savefile
+
+#RB 4 feb 2016 new addition
+set newact {}
+
+for { set j 0}  { $j < [llength $act] } { incr j 1 } {
+    set actatom [lindex $act $j]
+    if { $actatom < [lindex $delatoms end] } {
+      #puts "if state. actatom is $actatom"
+      lappend newact $actatom
+    } elseif { [lsearch $delatoms $actatom] >= 0 } {
+      #skipping because deleted atoms
+    } else {
+      #puts "else state. actatom is $actatom"
+      lappend newact [expr $actatom - [llength $delatoms] ]
+    }
+}
+
+
+set actfile [open act w]
+puts $actfile "set act  { $newact }"
+close $actfile
+
+puts "\033\[32mNo. act atoms changed from [llength $act] to [llength $newact]\033\[0m"
+
+#Update connectivity after atom deletion
+connect coords=$frag conn=$frag
+
+
+delete_object $frag
+
+puts "\033\[32mFiles: system.c and save-new.chm and act have been updated due to deleted atoms\033\[0m"
+puts "\033\[32m New PSF files: new-XPLOR-psffile.psf and new-CHARMM-psffile.psf have been created (also new-PDB.pdb).\033\[0m"
+puts "\033\[31mRemember to update QMatom info and rerun regiondefine.chm script!\033\[0m"

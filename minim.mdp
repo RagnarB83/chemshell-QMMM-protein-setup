@@ -1,0 +1,21 @@
+Integrator		= steep 	; Algorithm (steep = steepest descent minimization)
+emtol 			= 1000.0	; Stop minimization when maximum energy potential< 1000.0 kJ/mol/nm
+emstep 			= 0.01 		; Energy step size
+nsteps			= 50 		; Maximum number of steps
+
+nstlist			= 1 		; Frequency to update the neighbor list and long range forces
+cutoff-scheme	= Verlet	; scheme for cut-off
+ns_type 		= grid 		; Determine the neighbor grid
+coulombtype 	= PME 		; Treatment of long range electrostatic interactions
+rcoulomb 		= 1.0 		; Short-range electrostatic cut-off
+rvdw 			= 1.0 		; Short-range Van der Waals cut-off
+pbc				= xyz 		; Periodic Boundary Conditions 
+
+; When working with metalloproteins you are usually forced to restrain certain parts due to lack of forcefield parameters.
+; Here we restrain two different groups, the cofactor and the atoms of the residues connected to the cofactor
+; Look at the "gmx make_ndx" for explanation how to define your own group
+; If you want to restrain everything except hydrogen and water, you can do it with the option "Protein-H"
+
+freezegrps	 	= cofactor residuescofactor ; Defining which groups are restrained
+freezedim	 	= Y Y Y Y Y Y 	; restrained in X Y Z dimensions, one Y for each dimension of each group to restrain
+nstxout 		= 1				; Output from every step is saved

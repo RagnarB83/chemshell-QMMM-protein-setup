@@ -1,0 +1,12 @@
+; Dummy job file. It is needed to generate a binary file for the generation of counterions.
+integrator		= steep		
+emtol			= 1000.0  	
+emstep      	= 0.01      
+nsteps			= 50000	  	
+nstlist		    = 1		   
+cutoff-scheme   = Verlet
+ns_type		    = grid		
+coulombtype	    = PME		
+rcoulomb	    = 1.0		
+rvdw		    = 1.0		
+pbc		        = xyz 		

@@ -1,0 +1,193 @@
+if { $argv == "" || [llength $argv] < "2" } {
+puts "\033\[31mNo fragment file or XPLOR-PSF file given. Quitting.\033\[0m"
+puts "\033\[32mUsage: chemshell.bash addatoms.chm fragmentfile.c xplor-psf-file.psf\033\[0m"
+puts "Note: XPLOR-style PSF file has to be read-in (required by PSFgen 1.6). Both CHARMM and XPLOR style PSF file should have been created by Python script"
+puts "Script will create new PSF file in both CHARMM and XPLOR formats"
+exit
+}
+#if { $argv == "" } {
+#puts "\033\[31mNo fragment file given.\033\[0m Do chemshell.bash addatoms.chm fragmentfile.c"
+#exit
+#}
+#Chemshell-script location
+set scriptdir /users/home/ath146/Chemshell-scripts
+
+#Load PSFGEN 1.6 for PSFfile modification
+set auto_path [linsert $auto_path 0 $scriptdir/psfgen1.6]
+package require psfgen 1.6
+
+#Fragfile and PSF file taken from arguments
+set frag [lindex $argv 0]
+set oldxplorpsf [lindex $argv 1]
+set newxplorpsf  "[file rootname $oldxplorpsf]-changed.psf"
+
+exec cp $frag "old-$frag"
+puts "Old fragment file $frag copied to old-$frag"
+fragment $frag old persistent
+set oldnum [get_number_of_atoms coords=$frag]
+puts "Initial number of atoms is $oldnum"
+# Read in the original data from the preparation script. This sets up lists $charges, $groups, $types, $pdbresidues and $residuegroups
+# These lists are modified below in add-atoms section
+source save-new.chm
+exec cp save-new.chm old-save-new.chm
+puts "Old save-new.chm copied to old-save-new.chm"
+
+#############################
+# ADD NEW ATOMS HERE
+###################################
+#Initial definition of list
+set addedatoms {}
+
+# Adding new atoms here that will go at the end of fragment file
+# Cartesian coordinates in Bohr units. Have to be in the same coordinate system as fragment file
+# Typically one would import qmregioncoords.xyz file (from qmedit script) to e.g. Chemcraft and then add atoms in GUI.
+# Then copy/paste those coordinates here {atomsymbol xcoordinate ycoordinate zcoordinate}:
+#Create atomentries here called atomentry1, atomentry2 etc.
+
+set atomentry1 "C   105.598057910    130.493880515    198.470672381"
+set atomentry2 "O   105.840098779    132.133374674    200.061947778"
+
+
+#adding charge of 0.000 for each new atom to list charges. Same order as atom entry above. Syntax: set addedcharges {0.0 0.0 0.0}
+set addedcharges {0.021 -0.021}
+# Adding CHARMM atom types to list $types for added atoms. Only necessary because of QM-MM L-J interaction.
+# Here using standard N atom type since L-J parameters for N are usually the same. Same order as atom entry above.
+#Syntax set addedtypes {HS N C O}
+set addedtypes {CM OM}
+#Adding a name of new residuegroup.
+set resgroup CMO
+
+
+#Adding new residue info (for specified resgroup if needed)to topology file below if needed. Use old residue info if possible
+# Since this group will be in QM region, all charges can be 0.0. Atom types should be same as above
+#Order should be same as addedtypes above
+#ONLY DEFINE resgroupinfo if needed (does not exist in topology file). Otherwise comment out.
+
+#set resgroupinfo "
+#RESI CMO      0.00
+#GROUP
+#ATOM C1    0.00
+#ATOM O2    0.00
+#PATCHING FIRST NONE LAST NONE
+#"
+##################################################################################################
+# NOTHING BELOW SHOULD BE TOUCHED
+##################################################################################################
+# Adding resgroup info to top file if needed
+if { [info exists resgroupinfo] != 0  } {
+exec sed -i {s/END/ /g} $scriptdir/top_all36_prot.rtf
+set gp [open $scriptdir/top_all36_prot.rtf a]
+puts $gp $resgroupinfo
+puts $gp "END"
+close $gp
+}
+####################
+# CREATING NEW PSF FILE
+#######################
+# This section requires PSFGEN 1.6 to be loaded
+topology $scriptdir/top_all36_prot.rtf
+readpsf $oldxplorpsf
+
+segment $resgroup { residue 1 $resgroup }
+
+#Printing Xplor PSF file and CHARMM-types PSF file
+writepsf x-plor cmap new-XPLOR-psffile.psf
+writepsf charmm cmap new-CHARMM-psffile.psf
+
+#Needed?
+#regenerate angles dihedrals
+
+
+### Adding new atom to coordinate file from defined atomentries: atomentry1, atomentry2 etc.
+for { set q 0}  { $q < [llength $addedcharges] } { incr q 1 } {
+set m [expr $q + 1]
+set add "{ [eval set atomentry$m] }"
+puts "add is $add"
+add_atom_entry coords=$frag atom_entry=$add
+}
+
+
+#Adding charges and types
+for { set o 0}  { $o < [llength $addedcharges] } { incr o 1 } {
+set addcharge [lindex $addedcharges $o]
+set addtype [lindex $addedtypes $o]
+lappend charges $addcharge
+lappend types $addtype
+}
+
+source $scriptdir/procs.tcl
+
+
+
+
+
+set newnum [get_number_of_atoms coords=$frag]
+if { [llength $charges] != $newnum } {
+puts "List charges is not the same size as atoms in fragment file. Wrong fragfile or wrong save-new.chm file"
+}
+set addnum [expr $newnum - $oldnum]
+for { set i 1}  { $i <= $addnum } { incr i 1 } {
+set x [expr $oldnum + $i]
+puts "\033\[31mAdding\033\[0m new atom \033\[32m$x\033\[0m to fragment file. Will be added to active region act file."
+lappend addedatoms $x
+}
+puts "There are now $newnum atoms."
+
+set groups [concat $groups "{$addedatoms}"]
+set residuegroups [concat $residuegroups "{$addedatoms}"]
+
+#NEW pdbresidues add
+#PDBresidues
+set reslist [lindex $pdbresidues 0]
+set resnums [lindex $pdbresidues 1]
+
+#Adding new resname to first sublist of pdbresidues
+lappend reslist $resgroup
+
+#Would work possibly if X is correct number?
+#set resnums [sub_lappend resnums X "$addedatoms"]
+#append addedatoms " "
+#lappend resnums $addedatoms
+#Adding addedatoms as list to the end of pdbresidues
+set resnums [concat $resnums "{$addedatoms} "]
+
+set updpdbresidues {}
+lappend updpdbresidues $reslist
+lappend updpdbresidues $resnums
+
+set savefile [ open save-new.chm w]
+puts $savefile "# Updated file by addatoms.chm script. Atoms $addedatoms have been added to all lists."
+puts $savefile "set groups { $groups }"
+puts $savefile "set charges { $charges }"
+puts $savefile "set pdbresidues { $updpdbresidues }"
+puts $savefile "set residuegroups { $residuegroups }"
+puts $savefile "set types { $types }"
+puts $savefile "set addedatoms { $addedatoms }"
+close $savefile
+
+#Update connectivity after atom addition
+connect coords=$frag conn=$frag
+delete_object $frag
+
+#RB update 2 feb 2016. Now we are updating the act list instead of letting regiondefine do it
+source act
+
+for { set q 0}  { $q < [llength $addedatoms] } { incr q 1 } {
+set addat [lindex $addedatoms $q]
+lappend act $addat
+}
+set actfile [ open act w]
+puts $actfile "set act { $act }"
+close $actfile
+
+# We are not updating qmatoms file 
+
+puts "\033\[32mFiles: system.c, save-new.chm, and act have been updated with added-atom information\033\[0m"
+puts "\033\[32mRemember to rerun QMregiondefine.chm script to redefine QM region!\033\[0m"
+
+
+puts "\033\[32m New PSF files: new-XPLOR-psffile.psf and new-CHARMM-psffile.psf have been created (also new-PDB.pdb).\033\[0m"
+puts "\033\[32m Note that $scriptdir/top_all36_prot.rtf file has been updated with a new residue added at bottom of file.\033\[0m"
+
+
+

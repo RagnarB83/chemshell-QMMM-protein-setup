@@ -1,0 +1,56 @@
+title					= The Name Of Your NVT Simulation Here
+define					= -DPOSRES				; position restrain the protein
+		
+integrator				= md-vv					; Molecular Dynamics - Velocity Verlet
+nsteps					= 5 000 000				; Number of steps, here it is 1 * 5 000 000 fs = 5 000 ps = 5 ns
+dt		    			= 0.001					; Timestep is 1 fs 
+		
+nstxout					= 10 000				; save coordinates at each 10 000th step
+nstvout					= 10 000				; save velocities at each 10 000th step
+nstenergy				= 10 000				; save energies at each 10 000th step
+nstlog					= 10 000				; update log file at each 10 000th step
+
+continuation	       	= no					; This is not a continuation of another MD simulation
+constraint_algorithm    = lincs		 	
+constraints				= all-bonds  			; Every bond is constrained
+lincs_iter				= 1						; Accuracy of LINCS (usually set at 1 but necessary to be set at 2 for NVE simulations)
+lincs_order				= 4			
+	
+cutoff-scheme 			= Verlet	
+vdwtype					= Cut-off				; twin range cut-offs with neighbor list cut-off rlist and VdW cut-off rvdw, where rvdw ≥ rlist.	
+vdw-modifier			= Force-switch			; Smoothly switches the forces to zero between rvdw-switch and rvdw. This shifts the potential shift over the whole range and switches it to zero at the cut-off. Note that this is more expensive to calculate than a plain cut-off and it is not required for energy conservation, since Potential-shift conserves energy just as well.
+ns_type		 			= grid					; search neighboring grid cells
+nstlist					= 10					; 10 fs, largely irrelevant with Verlet. Remember, every option relying on nstlist must be a integer of it.
+rlist		    		= 1.2			
+rcoulomb	    		= 1.2					; short-range electrostatic cutoff (in nm)
+rvdw		    		= 1.2					; short-range van der Waals cutoff (in nm)
+rvdw-switch	   			= 1.0					; where to start switching the LJ force and possibly the potential, only relevant when force or potential switching is used
+verlet-buffer-tolerance	= 0.0005				; Usually at 0.005 but needs to be lowered for NVE calculations 
+
+coulombtype	  			= PME					; Particle Mesh Ewald for long-range electrostatics
+pme_order	  			= 4						; cubic interpolation
+fourierspacing			= 0.16					; grid spacing for FFT
+
+tcoupl					= nose-hoover	        ; temperature coupling is switched on in NVT. 
+tc-grps					= system				; Temperature is coupled to the whole system
+nsttcouple				= -1					; we want to let the coupling to be equal to nstlist
+nh-chain-length			= 4						; number of chained Nose-Hoover thermostats.
+tau-t 					= 1						; time constant for coupling
+ref-t					= 50					; reference temperature for coupling.
+
+annealing				= single				; The annealing process is set to be linear
+annealing-npoints		= 2						; Let's use 2 points from 50K to 300K. 
+annealing-time			= 0 500					; The temperature should rise LINEARILY from 50K to 300K in 50 ps. 
+annealing-temp			= 50 300				; We will start at 50K and end in 300K, if everything works as planned.
+
+pcoupl					= no 					; no pressure coupling in NVT
+
+pbc						= xyz					; 3-D PBC
+
+DispCorr				= EnerPres				; account for cut-off vdW scheme
+
+gen_vel					= yes					; assign velocities from Maxwell distribution
+gen_temp				= 50					; temperature for Maxwell distribution - question to disable this when running a NVT test
+gen_seed				= -1					; generate a random seed
+freezegrps              = Cofactor Residuescof 	; Which groups to freeze
+freezedim               = Y Y Y  Y Y Y 			; Triple Y mean the groups are frozen in x,y,z coordinates.

@@ -1,0 +1,72 @@
+# Write PDBfile from QM/MM optimization result.c file with correct residue and element information for VMD visualization
+#Read PSF file for residue and atom info. Read result.c for coordinates.
+
+if {[llength $$argv] < 2} {
+puts ""
+puts "Please provide a fragment-file and PSF-file (Xplor format) to script!"
+puts "Example:"
+puts "chemshell proper-PDBwrite.chm result.c new-XPLOR-psffile.psf"
+puts ""
+exit
+}
+#User arguments:
+set coordfile [lindex $argv 0]
+#PSF-file to read: xplor format
+set psffile [lindex $argv 1]
+
+#Grab elements and coords from coordfile
+set c [open $coordfile r ]
+set clines [split [read $c] "\n"]
+set ellist {}
+set grab False
+set bohrang 0.529177
+foreach line $clines {
+  if {$grab == True } {
+    if {[string match "block =*" $line] > 0} { set grab False; break }
+    lappend ellist [lindex $line 0]
+    lappend coords_x [expr [lindex $line 1] * $bohrang ]
+    lappend coords_y [expr [lindex $line 2] * $bohrang ]
+    lappend coords_z [expr [lindex $line 3]  * $bohrang ]
+  }
+  if {[string match "block = coordinates records*" $line] > 0} { set grab True }
+}
+close $c
+
+#Grab residue info from psffile
+set psf [open $psffile r ]
+set psflines [split [read $psf] "\n"]
+
+set atomindexlist {}
+set segmentlist {}
+set residlist {}
+set resnamelist {}
+set atomnamelist {}
+set typeslist {}
+set grab False
+foreach line $psflines {
+  if {$grab == True } {
+    #If empty line (end of PSF-output)
+    if {[string match "" $line] > 0} { set grab False; break }
+    lappend atomindexlist [lindex $line 0]
+    lappend segmentlist [lindex $line 1]
+    lappend residlist [lindex $line 2]
+    lappend resnamelist [lindex $line 3]
+    lappend atomnamelist [lindex $line 4]
+    lappend typeslist [lindex $line 5]
+  }
+  if {[string match "*!NATOM*" $line] > 0} { set grab True }
+}
+close $c
+
+#Write new PDB file
+set out [open "result.pdb" w ]
+foreach a $atomindexlist b $segmentlist c $residlist d $resnamelist e $atomnamelist f $typeslist cx $coords_x cy $coords_y cz $coords_z el $ellist {
+ #ATOM      1  N   SER A   2      65.342  32.035  32.324  1.00  0.00           N
+             set fmt1 "ATOM%7d %4s%4s%-1s%5d%12.3f%8.3f%8.3f%6s%6s%10s%2s"
+ puts $out [format $fmt1 $a $e $d " " $c $cx $cy $cz "1.00" "0.00" $b $el]
+
+}
+close $out
+puts ""
+puts "Result PDB file written to: result.pdb"
+puts ""

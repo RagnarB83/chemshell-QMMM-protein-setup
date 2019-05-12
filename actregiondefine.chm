@@ -1,0 +1,47 @@
+#############
+# ONLY USE IF STARTING NEW SYSTEM AND MISSING ACT 
+##############
+
+if { $argv == "" } {
+puts "\033\[31mNo fragment file given.\033\[0m Do chemshell.bash regiondefine.chm fragmentfile.c"
+exit
+}
+#Chemshell-script location
+set scriptdir /home/ragnarbj/QM-MM/nitrogenase/Chemshell-QM-MM-scripts
+
+#Putting fragment file in memory. 
+set frag $argv
+fragment $frag old persistent
+#Colored output
+#puts "Why not \033\[34mGooge\033\[0m first ?"
+#puts "Why not \033\[34mG\033\[31mo\033\[33mo\033\[34mg\033\[32ml\033\[31me\033\[0m first ?"
+
+source $scriptdir/procs.tcl
+##################################################################
+# SETTING UP ACTIVE ATOMS, FROZEN ATOMS AND CONSTRAINTS
+##################################################################
+source save-new.chm
+# Set origin atom (atom in the middle of active region). Here carbon of FeMoco
+set origin 17793
+#Radius of active region (will select whole residues).
+set radius 11
+#Freezing special residues/atoms by atom numbers.
+#Use seq function select range: Example: set frozgr1 [seq 17730 to 17829]
+# or define list explictly: set frozgr1 { 17730 17731 17732 etc} .
+# Combine by concat to list $extrafrozen (will be added to $frozen by select.tcl)
+# IMIA, FE2P:
+set frozgr1 [seq 17730 to 17775 ]
+# P-cluster:
+set frozgr2 [seq 17794 to 17808]
+# These are counterions:
+set frozgr3 [seq 37042 to 37066 ]
+# These are cysteine sulfur atoms in P-cluster:
+set frozgr4 {951 2350 9021 9901 8663 1323}
+
+set extrafrozen [concat $frozgr1 $frozgr2 $frozgr3 $frozgr4 ]
+# Calling Tcl code that sets up lists $act and $frozen using $origin, $radius and the frozen lists above.
+# act and frozen lists are also written to disk
+puts "There are [get_number_of_atoms coords=$frag] atoms."
+source $scriptdir/select.tcl
+
+delete_object $frag
