@@ -5,7 +5,7 @@ MM and QM/MM setup for a metalloprotein using GROMACS,  Chemshell and ORCA
 
 This page contains technical details regarding the GROMACS MM setup and QM/MM setup in Chemshell as performed in our QM/MM study on nitrogenase:
 QM/MM Study of the Nitrogenase MoFe Protein Resting State: Broken-Symmetry States, Protonation States, and QM Region Convergence in the FeMoco Active Site
-Bardi Benediktsson and Ragnar Bjornsson*, Inorg. Chem. 2017, 56, 13417-13429. Free e-print Link 
+Bardi Benediktsson and Ragnar Bjornsson*, Inorg. Chem. 2017, 56, 13417-13429. http://pubs.acs.org/articlesonrequest/AOR-VJGXSS8Xqqs7XIq5CDCS
 
 
 Scripts to perform GROMACS MM setup and MM simulations for a metalloprotein and subsequent Chemshell QM/MM calculations are described on this page and available on a Github page here.
