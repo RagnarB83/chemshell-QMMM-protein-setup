@@ -1,0 +1,47 @@
+#Amber-Chemshell-Prep
+#THIS SCRIPT SETS UP AMBER SYSTEM FOR USE IN CHEMSHELL.
+#Written by RB for Abhishek
+
+#Requires following input files:
+# An Amber INCRD file for reading coordinates and simultaneously getting correct connectivity via the load_amber_coords file
+# An Amber PRMTOP file
+# An XPLOR-style PSF file for conveniently creating residue lists (used by HDLC) via listprep Python script. Otherwise not used by the Chemshell-Amber interface.
+
+#Also requires modified parse_amber.tcl file. Contains Chemshell-Amber conversion routines (from within Chemshell) that have been modified slightly
+
+# Point to input files here:
+set ambercrdfile final.inpcrd
+set prmtopfile 1mxr_solv.prmtop
+set psffile charmm_RNR.psf
+
+#The name of the Chemshell fragment file created
+set outfile system.c
+
+#------------ NO CHANGES PROBABLY NEEDED BELOW------------
+
+#Using modified file with Amber-Chemshell import routines:
+# Has been modified w.r.t. periodicity, special amber atom types added and other stuff
+source parse_amber.tcl
+
+# Read in coordinates from Amber coord file and sets connectivity according to prmtop. Creates new Chemshell fragment file.
+load_amber_coords inpcrd=$ambercrdfile prmtop=$prmtopfile coords=$outfile
+
+# Create various lists by Python script that reads PSF-file. Lists created: groups, charges, pdbresidues, residuegroups
+# Not creating types list. Done below instead
+exec ./listprep-foramber.py $psffile
+
+#Read Amber atom types from prmtopfile and write to end of save-new.chm file
+parse_prmtop $prmtopfile
+load_amber_types $outfile
+global $amber_types
+set f [open "save-new.chm" a]
+puts $f "set types {$amber_types}"
+close $f
+#puts "RB amber_types is $amber_types"
+
+puts ""
+puts "-------------------------"
+puts "Amber conversion complete!"
+puts "Chemshell fragment file $outfile has been created."
+puts "List-file save-new.chm created"
+puts ""
