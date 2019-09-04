@@ -1,0 +1,128 @@
+#Using modified (atom types added) file with Amber-Chemshell import routines:
+#source parse_amber.tcl
+
+#Name of fragment file
+set frag system.c
+
+#Chemshell-scripts location. 
+#This dir should contain the update ORCA interface (orca-chemsh-withimage-withbs.tcl), the procs.tcl file (various useful functions), the topology and parameter files etc.
+set scriptdir /home/bjornsson/QM-MM-Chemshell-scripts/
+
+#Putting fragment file in memory.
+fragment $frag old persistent
+set numatoms [get_number_of_atoms coords=$frag]
+puts "Number of atoms is $numatoms"
+
+#Sourcing various TCl procs
+source $scriptdir/procs.tcl
+
+#ORCA path and sourcing of updated ORCA interface.
+set orcapath /opt/orca_4.2.0
+source $scriptdir/orca-chemsh-withimage-withbs.tcl
+
+
+#Sourcing file containing pdbresidues and residuegroups
+source save-new.chm
+
+# sourcing active and frozen lists. Act list should have been previously created by a script, for example actregiondefine.chm.
+source act
+puts "Active region is [llength $act] atoms."
+
+#Frozen list defined based on act list
+set all [seq 1 to $numatoms]
+set frozen [listcomp $all $act]
+
+puts "Frozen region is [llength $frozen] atoms."
+
+# QM REGION atoms, charge and multiplicity. qmatoms file should have been previously created (manually or by script).
+source qmatoms
+
+#Checking qmatoms list for duplicates.
+checkQMregion $qmatoms
+checkQMregion $act
+puts "There are [llength $qmatoms] QM atoms and they are $qmatoms"
+
+#Setting charge and multiplicity of the QM region.
+set charge 1
+set mult 2
+
+###################
+#Special BS settings
+####################
+set brokensym yes
+#Multiplicity of High-spin state and Broken-symmetry state. Will override $mult. Comment out if not using broken-symmetry.
+set hsmult 10
+set bsmult $mult
+
+#Selecting which system atom numbers to flip.
+#Will be converted to ORCA inputfile atom numbers by atomnumtoQMregionnum and then converted to comma-sep string.
+#247
+set atomstoflip {5510}
+set spinstofliplist [atomnumtoQMregionnum $qmatoms $atomstoflip]
+set spinstoflip [join $spinstofliplist ","]
+puts "spinstoflip is $spinstoflip and spinstofliplist is $spinstofliplist"
+
+##################
+# ORCA Theory level in simple input line
+set orcasimpleinput "! b97-3c"
+
+# ORCA block settings
+set orcablocks "
+%maxcore 2000
+
+%basis
+end
+
+%pal
+nprocs 1
+end
+"
+###################################################################
+
+#Setting up X-H and H-H constraints (TIP3) for optimization. Set jobtype to md for MD constraints
+set jobtype opt
+# To correctly find the TIP3P water the oxygen atom type is defined below. e.g. OT or OW
+set waterOtype "OW"
+source $scriptdir/constraints-onlytip3.tcl
+
+# Setting mxlist
+set mxlist 38000
+puts "mxlist is $mxlist"
+
+# Optimisation
+
+#Disabling atom_charges and atom_types. Not needed in Amber?
+#atom_charges= $charges
+#If needed then maybe this a way to do it: set atom_charges [ list_amber_atom_charges ] ??
+
+dl-find \
+  list_option=full coords=$frag active_atoms= $act constraints= $con maxcycle=1000 \
+  coordinates=hdlc residues= $pdbresidues maxstep=0.5 result=result.c \
+        theory=hybrid : [ list \
+           coupling=shift  debug=no qm_region= $qmatoms conn=$frag \
+           qm_theory=orca: [ list \
+              executable=$orcapath/orca \
+              brokensym=$brokensym \
+              hsmult=$hsmult \
+              bsmult=$bsmult \
+              spinstoflip=$spinstoflip \
+              charge=$charge \
+              mult=$mult \
+              orcasimpleinput= $orcasimpleinput \
+              orcablocks= $orcablocks ] \
+           mm_theory=dl_poly : [ list \
+              frozen= $frozen \
+              conn= $frag \
+              debug=no \
+              use_pairlist=no \
+              exact_srf=yes \
+              mxlist= $mxlist \
+              mxexcl=500 \
+              cutoff=1000 \
+              scale14 = { 1.0 1.0 } \
+              amber_prmtop_file=1mxr_solv.prmtop  ]]
+
+write_xyz coords=result.c file=result.xyz
+
+times
+
