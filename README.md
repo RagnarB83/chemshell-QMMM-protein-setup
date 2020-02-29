@@ -15,7 +15,8 @@ See page: https://sites.google.com/site/ragnarbjornsson/mm-and-qm-mm-setup for d
 
 
 If you find these scripts useful, please consider citing the article:
-QM/MM Study of the Nitrogenase MoFe Protein Resting State: Broken-Symmetry States, Protonation States, and QM Region Convergence in the FeMoco Active Site
+
+1. QM/MM Study of the Nitrogenase MoFe Protein Resting State: Broken-Symmetry States, Protonation States, and QM Region Convergence in the FeMoco Active Site
 Bardi Benediktsson and Ragnar Bjornsson, Inorg. Chem. 2017, 56, 13417-13429. http://pubs.acs.org/doi/full/10.1021/acs.inorgchem.7b02158
 
 
