@@ -61,9 +61,32 @@ close $c
 #Write new PDB file
 set out [open "result.pdb" w ]
 foreach a $atomindexlist b $segmentlist c $residlist d $resnamelist e $atomnamelist f $typeslist cx $coords_x cy $coords_y cz $coords_z el $ellist {
- #ATOM      1  N   SER A   2      65.342  32.035  32.324  1.00  0.00           N
-             set fmt1 "ATOM%7d %4s%4s%-1s%5d%12.3f%8.3f%8.3f%6s%6s%10s%2s"
- puts $out [format $fmt1 $a $e $d " " $c $cx $cy $cz "1.00" "0.00" $b $el]
+ # Definition with slight modifications from documentation:
+ # PDB file format from 1996: https://cdn.rcsb.org/wwpdb/docs/documentation/file-format/PDB_format_1996.pdf 
+ # The 1996 stadard still includes segID, which is dropped in later versions, but is nessecary for psfgen
+ #
+ #COLUMNS        DATA TYPE       FIELD         DEFINITION
+ #--------------------------------------------------------------------------------- 
+ # 1 -  6        Record name     "ATOM  " 												
+ # 7 - 11        Integer         serial        Atom serial number.							$a
+ #13 - 16        Atom            name          Atom name.									$e  right-alignment reqiured by Chemshell-protein-setup.sh
+ #17             Character       altLoc        Alternate location indicator.			
+ #18 - 20        Residue name    resName       Residue name.								$d  residue name from 18 - 21 for e.g. TIP3
+ #22             Character       chainID       Chain identifier.
+ #23 - 26        Integer         resSeq        Residue sequence number.						$c
+ #27             AChar           iCode         Code for insertion of residues.
+ #31 - 38        Real(8.3)       x             Orthogonal coordinates for X in Angstroms.	$cx
+ #39 - 46        Real(8.3)       y             Orthogonal coordinates for Y in Angstroms.	$cy
+ #47 - 54        Real(8.3)       z             Orthogonal coordinates for Z in Angstroms.	$cz
+ #55 - 60        Real(6.2)       occupancy     Occupancy.									1
+ #61 - 66        Real(6.2)       tempFactor    Temperature factor.							0
+ #73 - 76        LString(4)      segID         Segment identifier, left-justified.			$b  sigID from 71 - 76 for e.g. SOLV11, right justified for VMD
+ #77 - 78        LString(2)      element       Element symbol, right-justified.				$el capitalized
+ #79 - 80        LString(2)      charge        Charge on the atom.
+ # 
+ # e.g.: "ATOM      1  N   SER A   2      65.342  32.035  32.324  1.00  0.00           N"
+ set fmt1 "ATOM  %5d %4s %-4s %4d    %8.3f%8.3f%8.3f%6.2f%6.2f    %6s%2s"
+ puts $out [format $fmt1 $a $e $d $c $cx $cy $cz 1 0 $b [ string toupper $el ] ]
 
 }
 close $out
