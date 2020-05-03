@@ -28,7 +28,7 @@ for { set iact 0 } { $iact <= $nmmact } { incr iact 1 } {
            atom_number=$iat ] 0 ]
 #If statement to find OT in TIP3 and then adding H-H bond constraint (next 2 atoms)
 # ($iat -1) thing is because of lindexing the list
-  if { [lindex $types [expr $iat - 1 ]] == "OT" } then {
+  if { [lindex $types [expr $iat - 1 ]] == $waterOtype } then {
         if { $jobtype == "opt" } {
         lappend con [ list bond [expr $iat + 1] [expr $iat + 2] ]
         lappend con [ list bond [expr $iat] [expr $iat + 1] ]
