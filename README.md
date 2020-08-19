@@ -9,7 +9,8 @@ Chem. Comm., 2018, 54, 7310-7313.
  C. Van Stappen, A. Th. Thorhallsson, L. Decamps, R. Bjornsson*, S. DeBeer*,  Chem. Sci. 2019, 10, 9807-9821.
 4. A model for dinitrogen binding in the E4 state of nitrogenase
 Albert Th. Thorhallsson, Bardi Benediktsson, Ragnar Bjornsson*, Chem. Sci. 2019, 10, 11110-11124.
-
+5. Quantum Mechanics/Molecular Mechanics Study of Resting-State Vanadium Nitrogenase: Molecular and Electronic Structure of the Iron–Vanadium Cofactor
+Bardi Benediktsson and Ragnar Bjornsson, Inorg. Chem. 2020, 59, 11514–11527.
 
 See page: https://sites.google.com/site/ragnarbjornsson/mm-and-qm-mm-setup for detailed descriptions on using the scripts.
 
