@@ -190,7 +190,7 @@ source glureslist-seg\$p
 for { set j 0 } { \$j < [llength \$glures] } { incr j 1 } {
 set g [lindex \$glures \$j]
 puts "Patching GLU  to GLUP residue number \$g in ENZ\$p"
-patch GLUP ENZ\\$p:\\$g
+patch GLUP ENZ\$p:\$g
 }
 
 coordpdb protein-\$p.pdb ENZ\$p
