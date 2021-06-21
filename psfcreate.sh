@@ -546,3 +546,8 @@ echo "Please check PSFgen output above for error messages (e.g. duplicate RESID 
 else
 echo "All done. Everything checks out"
 fi
+echo ""
+echo "WARNING: PSFGEN CAN REORDER THE SYSTEM."
+echo "MAKE SURE TO USE the NEWLY CREATED FILES:"
+echo "new PSF-file:   newxplor.psf"
+echo "new PDB-file:   new.pdb"
