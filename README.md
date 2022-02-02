@@ -11,6 +11,13 @@ Chem. Comm., 2018, 54, 7310-7313.
 Albert Th. Thorhallsson, Bardi Benediktsson, Ragnar Bjornsson*, Chem. Sci. 2019, 10, 11110-11124.
 5. Quantum Mechanics/Molecular Mechanics Study of Resting-State Vanadium Nitrogenase: Molecular and Electronic Structure of the Iron–Vanadium Cofactor
 Bardi Benediktsson and Ragnar Bjornsson, Inorg. Chem. 2020, 59, 11514–11527.
+6. The E2 state of FeMoco: hydride formation vs. Fe reduction and a mechanism for H2 evolution
+A. Th. Thorhallsson, R. Bjornsson, Chem. Eur. J. 2021, 27, 16788-16800.
+7. Carbon Monoxide Binding to the Iron-Molybdenum Cofactor of Nitrogenase: A Detailed Quantum Mechanics/Molecular Mechanics Investigation
+N. B. Spiller, R. Bjornsson, S. DeBeer, F. Neese, Inorg. Chem. 2021, 60, 18031-18047.
+8. Analysis of the geometric and electronic structure of spin-coupled iron-sulfur dimers with broken-symmetry DFT: implications for FeMoco
+B. Benediktsson, R. Bjornsson, J. Chem. Theory Comput. 2022, accepted.
+
 
 See page: https://sites.google.com/site/ragnarbjornsson/mm-and-qm-mm-setup for detailed descriptions on using the scripts.
 
