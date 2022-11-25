@@ -28,4 +28,6 @@ If you find these scripts useful, please consider citing the article:
 Bardi Benediktsson and Ragnar Bjornsson, Inorg. Chem. 2017, 56, 13417-13429. http://pubs.acs.org/doi/full/10.1021/acs.inorgchem.7b02158
 
 
+Our research group has now switched over to our own open-source QM/MM program ASH.
+See https://github.com/RagnarB83/ash and https://ash.readthedocs.io/en/latest/
 
