@@ -1,4 +1,4 @@
-# Chemshell-QM/MM for complex metalloproteins
+# Chemshell-QM/MM for complex metalloproteins (old TCl-based version)
 
 Scripts to perform a) GROMACS MM setup and MM simulations for a metalloprotein and b) subsequent Chemshell QM/MM calculations as used in our nitrogenase QM/MM studies:
 1. QM/MM Study of the Nitrogenase MoFe Protein Resting State: Broken-Symmetry States, Protonation States, and QM Region Convergence in the FeMoco Active Site
@@ -28,6 +28,9 @@ If you find these scripts useful, please consider citing the article:
 Bardi Benediktsson and Ragnar Bjornsson, Inorg. Chem. 2017, 56, 13417-13429. http://pubs.acs.org/doi/full/10.1021/acs.inorgchem.7b02158
 
 
-Our research group has now switched over to our own open-source QM/MM program ASH.
-See https://github.com/RagnarB83/ash and https://ash.readthedocs.io/en/latest/
+# NOTE : 
+Our research group has now switched over to our own open-source QM/MM program ASH which is Python-based and more convenient:
+See https://github.com/RagnarB83/ash and https://ash.readthedocs.io
+
+See QM/MM tutorials: https://ash.readthedocs.io/en/latest/QM-MM-protein.html and https://ash.readthedocs.io/en/latest/Metalloprotein-I.html
 
